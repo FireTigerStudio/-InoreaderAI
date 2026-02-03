@@ -279,7 +279,7 @@
                     tags = App.loadTagsFromLocalStorage();
                     if (tags.length === 0) {
                         // Use default tags if nothing in localStorage
-                        tags = getDefaultTags();
+                        tags = await getDefaultTags();
                         App.saveTagsToLocalStorage(tags);
                     }
                     console.log('GitHub token not set. Using local cache.');
@@ -291,7 +291,7 @@
                 // Fallback to localStorage
                 tags = App.loadTagsFromLocalStorage();
                 if (tags.length === 0) {
-                    tags = getDefaultTags();
+                    tags = await getDefaultTags();
                 }
             } finally {
                 loadingState.classList.add('hidden');
@@ -299,13 +299,19 @@
             }
         }
 
-        // Get default tags for demonstration
-        function getDefaultTags() {
-            return [
-                { id: 1, name: "P0-Urgent", url: "https://www.inoreader.com/stream/user/1000000000/tag/P0-Urgent/view/json", type: "urgent" },
-                { id: 2, name: "Cyprus-URGENT", url: "https://www.inoreader.com/stream/user/1000000000/tag/Cyprus-URGENT/view/json", type: "urgent" },
-                { id: 3, name: "金银矿产业链", url: "https://www.inoreader.com/stream/user/1000000000/tag/金银矿产业链/view/json", type: "normal" }
-            ];
+        // Load tags from local tags.json file
+        async function getDefaultTags() {
+            try {
+                const response = await fetch('tags.json');
+                const data = await response.json();
+                return (data.tags || []).map((tag, index) => ({
+                    id: index + 1,
+                    ...tag
+                }));
+            } catch (error) {
+                console.error('Failed to load local tags.json:', error);
+                return [];
+            }
         }
 
         // Save tags to GitHub and localStorage
