@@ -278,7 +278,7 @@
                 const file = {
                     name: filename,
                     date: dateStr,
-                    downloadUrl: `../data/${filename}`
+                    downloadUrl: `data/${filename}`
                 };
 
                 const item = document.createElement('div');
@@ -329,7 +329,7 @@
 
         // Download placeholder file (local fallback)
         function downloadPlaceholderFile(filename) {
-            const fileUrl = `../data/${filename}`;
+            const fileUrl = `data/${filename}`;
             App.downloadFile(fileUrl, filename);
             App.showNotification(`正在下载 ${filename}`);
         }
