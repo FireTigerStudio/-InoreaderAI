@@ -23,7 +23,10 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           WECHAT_KEY: ${{ secrets.WECHAT_KEY }}
 
+      - name: Sync data to docs for GitHub Pages
+        run: cp -r data/* docs/data/ 2>/dev/null || mkdir -p docs/data && cp -r data/* docs/data/
+
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "📄 Normal update"
-          file_pattern: "data/*.xlsx"
+          file_pattern: "data/*.xlsx docs/data/*.xlsx"
