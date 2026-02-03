@@ -29,3 +29,4 @@ scripts/example-*.js
 
 # Claude settings (local only)
 .claude/
+n8n-json.json
