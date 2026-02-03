@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Sensitive files
+keys.txt
+.env
+.env.local
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+scripts/test-*.js
+scripts/example-*.js
+
+# Temporary files
+*.tmp
+*.temp
+
+# Claude settings (local only)
+.claude/

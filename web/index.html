@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS智能聚合系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="app.js"></script>
+    <style>
+        body {
+            background-color: #F5F5F7;
+        }
+        /* Apple-style shadow */
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .card-shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+        /* Smooth transitions */
+        .btn-hover {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <h1 class="text-xl font-semibold text-gray-900">RSS智能聚合系统</h1>
+                <a href="tags.html" class="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                    Tag管理
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <!-- Primary Download Section -->
+        <section class="mb-8">
+            <div class="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-8 sm:p-12 card-shadow-lg text-white">
+                <div class="flex items-center justify-center mb-4">
+                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-center mb-2">下载今日新闻</h2>
+                <p class="text-center text-white/90 text-lg mb-2" id="today-date">2026-02-03</p>
+                <p class="text-center text-white/80 text-sm mb-6" id="filename">news_2026-02-03.xlsx</p>
+                <div class="flex justify-center">
+                    <button id="download-today-btn" class="bg-white text-orange-600 font-semibold px-8 py-4 rounded-full text-lg btn-hover hover:bg-gray-50">
+                        立即下载
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics Cards -->
+        <section class="mb-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Total Articles Card -->
+                <div class="bg-white rounded-2xl p-6 card-shadow">
+                    <div class="text-gray-500 text-sm font-medium mb-2">今日文章</div>
+                    <div class="text-4xl font-bold text-gray-900 mb-1" id="stat-total">127</div>
+                    <div class="text-xs text-gray-400">Total Articles</div>
+                </div>
+
+                <!-- Urgent Card -->
+                <div class="bg-white rounded-2xl p-6 card-shadow">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-gray-500 text-sm font-medium">Urgent</div>
+                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                    </div>
+                    <div class="text-4xl font-bold text-red-600 mb-1" id="stat-urgent">23</div>
+                    <div class="text-xs text-gray-400">High Priority</div>
+                </div>
+
+                <!-- Normal Card -->
+                <div class="bg-white rounded-2xl p-6 card-shadow">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-gray-500 text-sm font-medium">Normal</div>
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div class="text-4xl font-bold text-green-600 mb-1" id="stat-normal">104</div>
+                    <div class="text-xs text-gray-400">Standard Priority</div>
+                </div>
+
+                <!-- Last Update Card -->
+                <div class="bg-white rounded-2xl p-6 card-shadow">
+                    <div class="text-gray-500 text-sm font-medium mb-2">最后更新</div>
+                    <div class="text-4xl font-bold text-purple-600 mb-1" id="stat-time">14:30</div>
+                    <div class="text-xs text-gray-400" id="stat-date">Today</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Historical Files Section -->
+        <section>
+            <h3 class="text-2xl font-bold text-gray-900 mb-6">历史文件</h3>
+            <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+                <div id="history-list" class="divide-y divide-gray-100">
+                    <!-- Historical files will be dynamically loaded here -->
+                    <div class="flex items-center justify-between p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">news_2026-02-02.xlsx</div>
+                                <div class="text-sm text-gray-500">昨天</div>
+                            </div>
+                        </div>
+                        <button class="download-btn text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors" data-file="news_2026-02-02.xlsx">
+                            下载
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">news_2026-02-01.xlsx</div>
+                                <div class="text-sm text-gray-500">2天前</div>
+                            </div>
+                        </div>
+                        <button class="download-btn text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors" data-file="news_2026-02-01.xlsx">
+                            下载
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-900">news_2026-01-31.xlsx</div>
+                                <div class="text-sm text-gray-500">3天前</div>
+                            </div>
+                        </div>
+                        <button class="download-btn text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors" data-file="news_2026-01-31.xlsx">
+                            下载
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty State (hidden by default) -->
+                <div id="empty-state" class="hidden p-12 text-center">
+                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p class="text-gray-500">暂无历史文件</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 pb-8 text-center text-sm text-gray-500">
+        <p>RSS智能聚合与分析系统 &copy; 2026</p>
+        <p class="mt-1">Powered by Gemini AI & GitHub Actions</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        const App = window.InoreaderApp;
+
+        // Initialize page
+        async function init() {
+            const today = new Date();
+            const todayStr = App.formatDate(today);
+
+            // Update today's download section
+            document.getElementById('today-date').textContent = todayStr;
+            document.getElementById('filename').textContent = `news_${todayStr}.xlsx`;
+
+            // Update last update time
+            document.getElementById('stat-time').textContent = App.formatTime(new Date());
+
+            // Load statistics and historical files
+            await Promise.all([
+                loadStatistics(),
+                loadHistoricalFiles()
+            ]);
+        }
+
+        // Load today's statistics
+        async function loadStatistics() {
+            try {
+                // If GitHub token is set, try to load from GitHub
+                if (App.hasToken()) {
+                    const stats = await App.loadTodayStats();
+                    updateStats(stats);
+                } else {
+                    // Use placeholder data if no token
+                    console.log('GitHub token not set. Using placeholder statistics.');
+                }
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+            }
+        }
+
+        // Update statistics display
+        function updateStats(data) {
+            if (data) {
+                document.getElementById('stat-total').textContent = data.total || 0;
+                document.getElementById('stat-urgent').textContent = data.urgent || 0;
+                document.getElementById('stat-normal').textContent = data.normal || 0;
+            }
+        }
+
+        // Load historical files from GitHub
+        async function loadHistoricalFiles() {
+            const historyList = document.getElementById('history-list');
+
+            // If no GitHub token, show placeholder data
+            if (!App.hasToken()) {
+                console.log('GitHub token not set. Showing placeholder historical files.');
+                loadPlaceholderFiles();
+                return;
+            }
+
+            try {
+                App.showLoading(historyList, '加载历史文件...');
+
+                const files = await App.loadHistoricalFiles();
+
+                if (files.length === 0) {
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    historyList.innerHTML = '';
+                    return;
+                }
+
+                // Render files list
+                historyList.innerHTML = files.map(file => createFileItem(file)).join('');
+
+                // Add event listeners to download buttons
+                document.querySelectorAll('.download-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const url = this.getAttribute('data-url');
+                        const filename = this.getAttribute('data-file');
+                        downloadFileFromGitHub(url, filename);
+                    });
+                });
+            } catch (error) {
+                console.error('Failed to load historical files:', error);
+                App.showError(historyList, '加载历史文件失败');
+            }
+        }
+
+        // Load placeholder files (when no GitHub token)
+        function loadPlaceholderFiles() {
+            const historyList = document.getElementById('history-list');
+            const today = new Date();
+
+            historyList.innerHTML = '';
+
+            for (let i = 1; i <= 7; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = App.formatDate(date);
+                const filename = `news_${dateStr}.xlsx`;
+
+                const file = {
+                    name: filename,
+                    date: dateStr,
+                    downloadUrl: `../data/${filename}`
+                };
+
+                const item = document.createElement('div');
+                item.innerHTML = createFileItem(file);
+                historyList.appendChild(item.firstElementChild);
+            }
+
+            // Add event listeners to download buttons
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filename = this.getAttribute('data-file');
+                    downloadPlaceholderFile(filename);
+                });
+            });
+        }
+
+        // Create file item HTML
+        function createFileItem(file) {
+            const relativeDate = App.getRelativeDateLabel(file.date);
+
+            return `
+                <div class="flex items-center justify-between p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900">${App.escapeHtml(file.name)}</div>
+                            <div class="text-sm text-gray-500">${relativeDate}</div>
+                        </div>
+                    </div>
+                    <button class="download-btn text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                            data-url="${file.downloadUrl}"
+                            data-file="${file.name}">
+                        下载
+                    </button>
+                </div>
+            `;
+        }
+
+        // Download file from GitHub
+        function downloadFileFromGitHub(url, filename) {
+            App.downloadFile(url, filename);
+            App.showNotification(`正在下载 ${filename}`);
+        }
+
+        // Download placeholder file (local fallback)
+        function downloadPlaceholderFile(filename) {
+            const fileUrl = `../data/${filename}`;
+            App.downloadFile(fileUrl, filename);
+            App.showNotification(`正在下载 ${filename}`);
+        }
+
+        // Download today's file
+        document.getElementById('download-today-btn').addEventListener('click', function() {
+            const today = new Date();
+            const todayStr = App.formatDate(today);
+            const filename = `news_${todayStr}.xlsx`;
+
+            if (App.hasToken()) {
+                // Try to download from GitHub if token is set
+                // For now, use relative path fallback
+                downloadPlaceholderFile(filename);
+            } else {
+                downloadPlaceholderFile(filename);
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

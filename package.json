@@ -1,0 +1,24 @@
+{
+  "name": "inoreader-ai",
+  "version": "1.0.0",
+  "description": "RSS智能聚合与分析系统 - Inoreader RSS + Gemini AI + GitHub Actions",
+  "type": "module",
+  "main": "scripts/main.js",
+  "scripts": {
+    "start": "node scripts/main.js"
+  },
+  "keywords": [
+    "rss",
+    "inoreader",
+    "gemini",
+    "ai",
+    "news"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "xlsx": "^0.18.5",
+    "@google/generative-ai": "^0.1.0",
+    "node-fetch": "^3.3.0"
+  }
+}

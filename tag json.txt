@@ -1,0 +1,50 @@
+// ⚠️ 配置区域 - 在这里添加/删除/修改你的Tag
+
+const tags = [
+  {
+    name: "大宗商品波动",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/1-%E5%A4%A7%E5%AE%97%E5%95%86%E5%93%81%E6%B3%A2%E5%8A%A8/view/json"
+  },
+  {
+    name: "塞浦路斯",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/Cyprus-URGENT/view/json"
+  },
+  {
+    name: "macro-中国",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/MacroEco-%E4%B8%AD%E5%9B%BD/view/json"
+  },
+  {
+    name: "macro-欧洲",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/MacroEco-%E6%AC%A7%E6%B4%B2/view/json"
+  },
+  {
+    name: "macro-美国",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/MacroEco-%E7%BE%8E%E5%9B%BD/view/json"
+  },
+  {
+    name: "P0-Urgent",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/P0-Urgent/view/json"
+  },
+  {
+    name: "tech",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/tech/view/json"
+  },
+  {
+    name: "国家紧急",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/%E5%9B%BD%E5%AE%B6%E7%B4%A7%E6%80%A5/view/json"
+  },
+  {
+    name: "市场异常",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/%E5%B8%82%E5%9C%BA%E5%BC%82%E5%B8%B8/view/json"
+  },
+  {
+    name: "金银矿产业链",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/%E9%87%91%E9%93%B6%E7%9F%BF%E4%BA%A7%E4%B8%9A%E9%93%BE/view/json"
+  },
+  {
+    name: "黄金-美元-利率",
+    url: "https://www.inoreader.com/stream/user/1003496420/tag/%E9%BB%84%E9%87%91-%E7%BE%8E%E5%85%83-%E5%88%A9%E7%8E%87/view/json"
+  }
+];
+
+return tags.map(tag => ({ json: tag }));

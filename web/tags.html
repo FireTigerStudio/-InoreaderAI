@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag管理 - RSS智能聚合系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="app.js"></script>
+    <style>
+        body {
+            background-color: #F5F5F7;
+        }
+        /* Apple-style shadow */
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .card-shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+        /* Smooth transitions */
+        .btn-hover {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.15);
+        }
+        /* Tag type indicators */
+        .tag-urgent {
+            color: #DC2626;
+        }
+        .tag-normal {
+            color: #059669;
+        }
+        /* Modal backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <h1 class="text-xl font-semibold text-gray-900">Tag管理</h1>
+                <a href="index.html" class="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    返回首页
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <!-- Add New Tag Button -->
+        <section class="mb-8">
+            <button id="add-tag-btn" class="bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                <span>添加新Tag</span>
+            </button>
+        </section>
+
+        <!-- Tags List -->
+        <section class="mb-8">
+            <div id="tags-container" class="space-y-4">
+                <!-- Tags will be dynamically loaded here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden bg-white rounded-2xl card-shadow p-12 text-center">
+                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+                <p class="text-gray-500 text-lg mb-2">暂无Tag</p>
+                <p class="text-gray-400 text-sm">点击上方按钮添加第一个Tag</p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="bg-white rounded-2xl card-shadow p-12 text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <p class="text-gray-500">加载中...</p>
+            </div>
+        </section>
+
+        <!-- GitHub Token Section -->
+        <section>
+            <div class="bg-white rounded-2xl card-shadow p-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">GitHub Token</h3>
+                        <p class="text-sm text-gray-500">首次使用需设置，用于保存配置到GitHub</p>
+                    </div>
+                    <button id="edit-token-btn" class="text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                        修改Token
+                    </button>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="flex-1 bg-gray-50 rounded-lg px-4 py-3 font-mono text-sm text-gray-700">
+                        <span id="token-display">未设置</span>
+                    </div>
+                    <div id="token-status" class="flex items-center space-x-2">
+                        <!-- Status will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 pb-8 text-center text-sm text-gray-500">
+        <p>RSS智能聚合与分析系统 &copy; 2026</p>
+        <p class="mt-1">Powered by Gemini AI & GitHub Actions</p>
+    </footer>
+
+    <!-- Add/Edit Tag Modal -->
+    <div id="tag-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 transition-opacity modal-backdrop" id="modal-backdrop"></div>
+
+            <!-- Modal panel -->
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 id="modal-title" class="text-xl font-semibold text-gray-900">添加Tag</h3>
+                        <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="tag-form" class="space-y-4">
+                        <!-- Tag Name -->
+                        <div>
+                            <label for="tag-name" class="block text-sm font-medium text-gray-700 mb-2">Tag名称</label>
+                            <input type="text" id="tag-name" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="例如：P0-Urgent">
+                        </div>
+
+                        <!-- Tag URL -->
+                        <div>
+                            <label for="tag-url" class="block text-sm font-medium text-gray-700 mb-2">Tag URL</label>
+                            <input type="url" id="tag-url" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="https://www.inoreader.com/stream/...">
+                            <p class="mt-1 text-xs text-gray-500">从Inoreader复制Tag的RSS订阅链接</p>
+                        </div>
+
+                        <!-- Tag Type -->
+                        <div>
+                            <label for="tag-type" class="block text-sm font-medium text-gray-700 mb-2">Tag类型</label>
+                            <select id="tag-type" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <option value="urgent">Urgent (紧急)</option>
+                                <option value="normal">Normal (普通)</option>
+                            </select>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancel-btn" class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                                取消
+                            </button>
+                            <button type="submit" id="save-tag-btn" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                                保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Modal -->
+    <div id="token-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 transition-opacity modal-backdrop" id="token-modal-backdrop"></div>
+
+            <!-- Modal panel -->
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-6 pt-6 pb-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900">设置GitHub Token</h3>
+                        <button id="close-token-modal-btn" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="token-form" class="space-y-4">
+                        <div>
+                            <label for="github-token" class="block text-sm font-medium text-gray-700 mb-2">GitHub Token</label>
+                            <input type="password" id="github-token" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm"
+                                placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                            <div class="mt-2 text-xs text-gray-500 space-y-1">
+                                <p>需要权限: repo (完整访问私有仓库)</p>
+                                <p>创建Token: <a href="https://github.com/settings/tokens/new" target="_blank" class="text-blue-600 hover:underline">GitHub Settings → Developer settings → Personal access tokens</a></p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" id="cancel-token-btn" class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                                取消
+                            </button>
+                            <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                                保存
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const App = window.InoreaderApp;
+
+        let tags = [];
+        let editingTagId = null;
+        let currentFileSha = null; // Store current file SHA for GitHub updates
+
+        // Initialize page
+        async function init() {
+            loadToken();
+            setupEventListeners();
+            await loadTags();
+        }
+
+        // Load tags from GitHub or localStorage fallback
+        async function loadTags() {
+            const container = document.getElementById('tags-container');
+            const loadingState = document.getElementById('loading-state');
+
+            try {
+                // If GitHub token is set, try to load from GitHub
+                if (App.hasToken()) {
+                    loadingState.classList.remove('hidden');
+
+                    const result = await App.loadTagsFromGitHub();
+                    tags = result.tags.map((tag, index) => ({
+                        id: index + 1,
+                        ...tag
+                    }));
+                    currentFileSha = result.sha;
+
+                    // Also save to localStorage as cache
+                    App.saveTagsToLocalStorage(tags);
+
+                    App.showNotification('已从GitHub加载配置', 'success');
+                } else {
+                    // Load from localStorage if no token
+                    tags = App.loadTagsFromLocalStorage();
+                    if (tags.length === 0) {
+                        // Use default tags if nothing in localStorage
+                        tags = getDefaultTags();
+                        App.saveTagsToLocalStorage(tags);
+                    }
+                    console.log('GitHub token not set. Using local cache.');
+                }
+            } catch (error) {
+                console.error('Failed to load tags from GitHub:', error);
+                App.showNotification('从GitHub加载失败，使用本地缓存', 'warning', 3000);
+
+                // Fallback to localStorage
+                tags = App.loadTagsFromLocalStorage();
+                if (tags.length === 0) {
+                    tags = getDefaultTags();
+                }
+            } finally {
+                loadingState.classList.add('hidden');
+                renderTags();
+            }
+        }
+
+        // Get default tags for demonstration
+        function getDefaultTags() {
+            return [
+                { id: 1, name: "P0-Urgent", url: "https://www.inoreader.com/stream/user/1000000000/tag/P0-Urgent/view/json", type: "urgent" },
+                { id: 2, name: "Cyprus-URGENT", url: "https://www.inoreader.com/stream/user/1000000000/tag/Cyprus-URGENT/view/json", type: "urgent" },
+                { id: 3, name: "金银矿产业链", url: "https://www.inoreader.com/stream/user/1000000000/tag/金银矿产业链/view/json", type: "normal" }
+            ];
+        }
+
+        // Save tags to GitHub and localStorage
+        async function saveTags() {
+            // Always save to localStorage first
+            App.saveTagsToLocalStorage(tags);
+
+            // If GitHub token is set, also save to GitHub
+            if (App.hasToken()) {
+                try {
+                    // Remove id field before saving to GitHub (not needed in config)
+                    const tagsForGitHub = tags.map(({ id, ...rest }) => rest);
+
+                    const result = await App.saveTagsToGitHub(tagsForGitHub, currentFileSha);
+
+                    // Update SHA for next save
+                    currentFileSha = result.content.sha;
+
+                    App.showNotification('配置已保存到GitHub', 'success');
+                } catch (error) {
+                    console.error('Failed to save tags to GitHub:', error);
+                    App.showNotification('保存到GitHub失败: ' + error.message, 'error', 4000);
+                }
+            } else {
+                App.showNotification('配置已保存到本地缓存（未同步到GitHub）', 'warning', 3000);
+            }
+        }
+
+        // Render tags list
+        function renderTags() {
+            const container = document.getElementById('tags-container');
+            const emptyState = document.getElementById('empty-state');
+            const loadingState = document.getElementById('loading-state');
+
+            loadingState.classList.add('hidden');
+
+            if (tags.length === 0) {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            container.innerHTML = tags.map(tag => createTagCard(tag)).join('');
+
+            // Add event listeners to type selects
+            tags.forEach(tag => {
+                const select = document.getElementById(`type-${tag.id}`);
+                if (select) {
+                    select.addEventListener('change', (e) => updateTagType(tag.id, e.target.value));
+                }
+            });
+
+            // Add event listeners to edit buttons
+            tags.forEach(tag => {
+                const editBtn = document.getElementById(`edit-${tag.id}`);
+                if (editBtn) {
+                    editBtn.addEventListener('click', () => openEditModal(tag));
+                }
+            });
+
+            // Add event listeners to delete buttons
+            tags.forEach(tag => {
+                const deleteBtn = document.getElementById(`delete-${tag.id}`);
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', () => deleteTag(tag.id));
+                }
+            });
+        }
+
+        // Create tag card HTML
+        function createTagCard(tag) {
+            const isUrgent = tag.type === 'urgent';
+            const icon = isUrgent ? '🔴' : '🟢';
+            const typeClass = isUrgent ? 'tag-urgent' : 'tag-normal';
+
+            return `
+                <div class="bg-white rounded-2xl card-shadow p-6 hover:shadow-lg transition-shadow">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center space-x-3 flex-1">
+                            <span class="text-2xl">${icon}</span>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-gray-900">${App.escapeHtml(tag.name)}</h3>
+                                <p class="text-sm text-gray-500 mt-1 break-all">${App.escapeHtml(tag.url)}</p>
+                            </div>
+                        </div>
+                        <select id="type-${tag.id}" class="ml-4 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium ${typeClass} focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="urgent" ${tag.type === 'urgent' ? 'selected' : ''}>Urgent</option>
+                            <option value="normal" ${tag.type === 'normal' ? 'selected' : ''}>Normal</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-2">
+                        <button id="edit-${tag.id}" class="text-blue-600 hover:text-blue-700 font-medium text-sm px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                            编辑
+                        </button>
+                        <button id="delete-${tag.id}" class="text-red-600 hover:text-red-700 font-medium text-sm px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
+                            删除
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update tag type
+        async function updateTagType(tagId, newType) {
+            const tag = tags.find(t => t.id === tagId);
+            if (tag) {
+                tag.type = newType;
+                App.showNotification('Tag类型已更新');
+                renderTags();
+                await saveTags();
+            }
+        }
+
+        // Open add tag modal
+        function openAddModal() {
+            editingTagId = null;
+            document.getElementById('modal-title').textContent = '添加Tag';
+            document.getElementById('tag-name').value = '';
+            document.getElementById('tag-url').value = '';
+            document.getElementById('tag-type').value = 'normal';
+            document.getElementById('tag-modal').classList.remove('hidden');
+        }
+
+        // Open edit tag modal
+        function openEditModal(tag) {
+            editingTagId = tag.id;
+            document.getElementById('modal-title').textContent = '编辑Tag';
+            document.getElementById('tag-name').value = tag.name;
+            document.getElementById('tag-url').value = tag.url;
+            document.getElementById('tag-type').value = tag.type;
+            document.getElementById('tag-modal').classList.remove('hidden');
+        }
+
+        // Close tag modal
+        function closeTagModal() {
+            document.getElementById('tag-modal').classList.add('hidden');
+            editingTagId = null;
+        }
+
+        // Delete tag
+        async function deleteTag(tagId) {
+            if (confirm('确定要删除这个Tag吗？')) {
+                tags = tags.filter(t => t.id !== tagId);
+                App.showNotification('Tag已删除');
+                renderTags();
+                await saveTags();
+            }
+        }
+
+        // Save tag (add or edit)
+        async function saveTag(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('tag-name').value.trim();
+            const url = document.getElementById('tag-url').value.trim();
+            const type = document.getElementById('tag-type').value;
+
+            if (!name || !url) {
+                App.showNotification('请填写所有必填字段', 'error');
+                return;
+            }
+
+            if (editingTagId !== null) {
+                // Edit existing tag
+                const tag = tags.find(t => t.id === editingTagId);
+                if (tag) {
+                    tag.name = name;
+                    tag.url = url;
+                    tag.type = type;
+                    App.showNotification('Tag已更新');
+                }
+            } else {
+                // Add new tag
+                const newTag = {
+                    id: Date.now(),
+                    name,
+                    url,
+                    type
+                };
+                tags.push(newTag);
+                App.showNotification('Tag已添加');
+            }
+
+            closeTagModal();
+            renderTags();
+            await saveTags();
+        }
+
+        // Load GitHub token status
+        function loadToken() {
+            const tokenDisplay = document.getElementById('token-display');
+            const tokenStatus = document.getElementById('token-status');
+
+            if (App.hasToken()) {
+                tokenDisplay.textContent = '●●●●●●●●●●●●●●●●';
+                tokenStatus.innerHTML = `
+                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-sm text-green-600 font-medium">已设置</span>
+                `;
+            } else {
+                tokenDisplay.textContent = '未设置';
+                tokenStatus.innerHTML = `
+                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span class="text-sm text-orange-600 font-medium">未设置</span>
+                `;
+            }
+        }
+
+        // Open token modal
+        function openTokenModal() {
+            const token = App.getToken() || '';
+            document.getElementById('github-token').value = token;
+            document.getElementById('token-modal').classList.remove('hidden');
+        }
+
+        // Close token modal
+        function closeTokenModal() {
+            document.getElementById('token-modal').classList.add('hidden');
+        }
+
+        // Save GitHub token
+        async function saveToken(event) {
+            event.preventDefault();
+
+            const token = document.getElementById('github-token').value.trim();
+
+            if (!token) {
+                App.showNotification('请输入GitHub Token', 'error');
+                return;
+            }
+
+            if (!App.isValidToken(token)) {
+                App.showNotification('Token格式不正确，应以 ghp_ 或 github_pat_ 开头', 'error');
+                return;
+            }
+
+            App.setToken(token);
+            loadToken();
+            closeTokenModal();
+            App.showNotification('GitHub Token已保存，正在重新加载配置...');
+
+            // Reload tags from GitHub with new token
+            await loadTags();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Add tag button
+            document.getElementById('add-tag-btn').addEventListener('click', openAddModal);
+
+            // Modal close buttons
+            document.getElementById('close-modal-btn').addEventListener('click', closeTagModal);
+            document.getElementById('cancel-btn').addEventListener('click', closeTagModal);
+            document.getElementById('modal-backdrop').addEventListener('click', closeTagModal);
+
+            // Tag form submit
+            document.getElementById('tag-form').addEventListener('submit', saveTag);
+
+            // Token modal buttons
+            document.getElementById('edit-token-btn').addEventListener('click', openTokenModal);
+            document.getElementById('close-token-modal-btn').addEventListener('click', closeTokenModal);
+            document.getElementById('cancel-token-btn').addEventListener('click', closeTokenModal);
+            document.getElementById('token-modal-backdrop').addEventListener('click', closeTokenModal);
+
+            // Token form submit
+            document.getElementById('token-form').addEventListener('submit', saveToken);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
