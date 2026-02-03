@@ -275,24 +275,19 @@
 
                     App.showNotification('已从GitHub加载配置', 'success');
                 } else {
-                    // Load from localStorage if no token
-                    tags = App.loadTagsFromLocalStorage();
-                    if (tags.length === 0) {
-                        // Use default tags if nothing in localStorage
-                        tags = await getDefaultTags();
+                    // No GitHub token - load directly from local tags.json
+                    tags = await getDefaultTags();
+                    if (tags.length > 0) {
                         App.saveTagsToLocalStorage(tags);
                     }
-                    console.log('GitHub token not set. Using local cache.');
+                    console.log('GitHub token not set. Loaded from tags.json.');
                 }
             } catch (error) {
                 console.error('Failed to load tags from GitHub:', error);
                 App.showNotification('从GitHub加载失败，使用本地缓存', 'warning', 3000);
 
-                // Fallback to localStorage
-                tags = App.loadTagsFromLocalStorage();
-                if (tags.length === 0) {
-                    tags = await getDefaultTags();
-                }
+                // Fallback to tags.json
+                tags = await getDefaultTags();
             } finally {
                 loadingState.classList.add('hidden');
                 renderTags();
