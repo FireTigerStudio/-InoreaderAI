@@ -12,8 +12,8 @@
 // Configuration Constants
 const CONFIG = {
   // User needs to modify these values to match their GitHub repository
-  GITHUB_OWNER: 'JuliaJiaYou',  // GitHub username
-  GITHUB_REPO: 'InoreaderAI',            // Repository name
+  GITHUB_OWNER: 'FireTigerStudio',  // GitHub username
+  GITHUB_REPO: '-InoreaderAI',            // Repository name
   TAGS_PATH: 'config/tags.json',         // Tags configuration file path
   DATA_DIR: 'data',                      // Excel files directory
   GITHUB_API_BASE: 'https://api.github.com'
