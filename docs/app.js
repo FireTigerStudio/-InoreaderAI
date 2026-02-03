@@ -195,8 +195,13 @@ async function loadTagsFromGitHub() {
   try {
     const data = await githubGet(CONFIG.TAGS_PATH);
 
-    // Decode Base64 content
-    const content = atob(data.content.replace(/\n/g, ''));
+    // Decode Base64 content (properly handle UTF-8)
+    const binaryString = atob(data.content.replace(/\n/g, ''));
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const content = new TextDecoder('utf-8').decode(bytes);
     const tagsData = JSON.parse(content);
 
     return {
@@ -262,7 +267,13 @@ async function loadTodayStats() {
     // Try to load stats.json if it exists
     const statsPath = 'stats.json';
     const data = await githubGet(statsPath);
-    const content = atob(data.content.replace(/\n/g, ''));
+    // Decode Base64 content (properly handle UTF-8)
+    const binaryString = atob(data.content.replace(/\n/g, ''));
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const content = new TextDecoder('utf-8').decode(bytes);
     return JSON.parse(content);
   } catch (error) {
     console.warn('Could not load stats.json, returning default stats:', error);
