@@ -198,19 +198,25 @@
             ]);
         }
 
-        // Load today's statistics
+        // Load today's statistics from local stats.json
         async function loadStatistics() {
             try {
-                // If GitHub token is set, try to load from GitHub
-                if (App.hasToken()) {
-                    const stats = await App.loadTodayStats();
+                const response = await fetch('stats.json?' + Date.now());
+                if (response.ok) {
+                    const stats = await response.json();
                     updateStats(stats);
+                    // Update last update time from stats
+                    if (stats.lastUpdate) {
+                        const lastUpdate = new Date(stats.lastUpdate);
+                        document.getElementById('stat-time').textContent = App.formatTime(lastUpdate);
+                    }
                 } else {
-                    // Use placeholder data if no token
-                    console.log('GitHub token not set. Using placeholder statistics.');
+                    console.log('stats.json not found, using defaults.');
+                    updateStats({ total: 0, urgent: 0, normal: 0 });
                 }
             } catch (error) {
                 console.error('Failed to load statistics:', error);
+                updateStats({ total: 0, urgent: 0, normal: 0 });
             }
         }
 
@@ -223,74 +229,53 @@
             }
         }
 
-        // Load historical files from GitHub
+        // Load historical files from stats or by checking available files
         async function loadHistoricalFiles() {
-            const historyList = document.getElementById('history-list');
-
-            // If no GitHub token, show placeholder data
-            if (!App.hasToken()) {
-                console.log('GitHub token not set. Showing placeholder historical files.');
-                loadPlaceholderFiles();
-                return;
-            }
-
-            try {
-                App.showLoading(historyList, '加载历史文件...');
-
-                const files = await App.loadHistoricalFiles();
-
-                if (files.length === 0) {
-                    document.getElementById('empty-state').classList.remove('hidden');
-                    historyList.innerHTML = '';
-                    return;
-                }
-
-                // Render files list
-                historyList.innerHTML = files.map(file => createFileItem(file)).join('');
-
-                // Add event listeners to download buttons
-                document.querySelectorAll('.download-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        const url = this.getAttribute('data-url');
-                        const filename = this.getAttribute('data-file');
-                        downloadFileFromGitHub(url, filename);
-                    });
-                });
-            } catch (error) {
-                console.error('Failed to load historical files:', error);
-                App.showError(historyList, '加载历史文件失败');
-            }
-        }
-
-        // Load placeholder files (when no GitHub token)
-        function loadPlaceholderFiles() {
             const historyList = document.getElementById('history-list');
             const today = new Date();
 
             historyList.innerHTML = '';
 
-            for (let i = 1; i <= 7; i++) {
+            // Check last 7 days for available files
+            let foundFiles = [];
+            for (let i = 0; i <= 7; i++) {
                 const date = new Date(today);
                 date.setDate(date.getDate() - i);
                 const dateStr = App.formatDate(date);
                 const filename = `news_${dateStr}.xlsx`;
+                const fileUrl = `data/${filename}`;
 
-                const file = {
-                    name: filename,
-                    date: dateStr,
-                    downloadUrl: `data/${filename}`
-                };
-
-                const item = document.createElement('div');
-                item.innerHTML = createFileItem(file);
-                historyList.appendChild(item.firstElementChild);
+                // Try HEAD request to check if file exists
+                try {
+                    const resp = await fetch(fileUrl, { method: 'HEAD' });
+                    if (resp.ok) {
+                        foundFiles.push({
+                            name: filename,
+                            date: dateStr,
+                            downloadUrl: fileUrl
+                        });
+                    }
+                } catch (e) {
+                    // File doesn't exist, skip
+                }
             }
+
+            if (foundFiles.length === 0) {
+                document.getElementById('empty-state').classList.remove('hidden');
+                historyList.innerHTML = '';
+                return;
+            }
+
+            // Render found files
+            historyList.innerHTML = foundFiles.map(file => createFileItem(file)).join('');
 
             // Add event listeners to download buttons
             document.querySelectorAll('.download-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const filename = this.getAttribute('data-file');
-                    downloadPlaceholderFile(filename);
+                    const fileUrl = `data/${filename}`;
+                    App.downloadFile(fileUrl, filename);
+                    App.showNotification(`正在下载 ${filename}`);
                 });
             });
         }
@@ -321,32 +306,14 @@
             `;
         }
 
-        // Download file from GitHub
-        function downloadFileFromGitHub(url, filename) {
-            App.downloadFile(url, filename);
-            App.showNotification(`正在下载 ${filename}`);
-        }
-
-        // Download placeholder file (local fallback)
-        function downloadPlaceholderFile(filename) {
-            const fileUrl = `data/${filename}`;
-            App.downloadFile(fileUrl, filename);
-            App.showNotification(`正在下载 ${filename}`);
-        }
-
         // Download today's file
         document.getElementById('download-today-btn').addEventListener('click', function() {
             const today = new Date();
             const todayStr = App.formatDate(today);
             const filename = `news_${todayStr}.xlsx`;
-
-            if (App.hasToken()) {
-                // Try to download from GitHub if token is set
-                // For now, use relative path fallback
-                downloadPlaceholderFile(filename);
-            } else {
-                downloadPlaceholderFile(filename);
-            }
+            const fileUrl = `data/${filename}`;
+            App.downloadFile(fileUrl, filename);
+            App.showNotification(`正在下载 ${filename}`);
         });
 
         // Initialize on page load

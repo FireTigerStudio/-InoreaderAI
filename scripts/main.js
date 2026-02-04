@@ -7,7 +7,7 @@ import { fetchInoreader } from './fetch.js';
 import { analyzeWithGemini } from './analyze.js';
 import { pushToWechat } from './wechat.js';
 import { getExistingUrls, appendToExcel, cleanOldFiles, generateExcelFileName } from './excel.js';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -60,6 +60,42 @@ function loadTags() {
     console.error('加载标签配置失败:', error.message);
     throw error;
   }
+}
+
+/**
+ * 写入统计数据到 stats.json
+ * @param {string} dataDir - 数据目录路径
+ * @param {Array} allArticles - 所有文章数组
+ * @param {string} type - 执行类型
+ */
+function writeStats(dataDir, allArticles, type) {
+  const statsPath = path.join(projectRoot, 'stats.json');
+  const today = new Date().toISOString().split('T')[0];
+
+  // 读取现有 stats（如果存在且是今天的）
+  let stats = { date: today, total: 0, urgent: 0, normal: 0, lastUpdate: '' };
+  try {
+    if (existsSync(statsPath)) {
+      const existing = JSON.parse(readFileSync(statsPath, 'utf-8'));
+      if (existing.date === today) {
+        stats = existing;
+      }
+    }
+  } catch (e) {
+    // 忽略读取错误，使用默认值
+  }
+
+  // 累加本次新增文章数
+  const urgentCount = allArticles.filter(a => a.tag?.type === 'urgent').length;
+  const normalCount = allArticles.filter(a => a.tag?.type === 'normal').length;
+
+  stats.total += allArticles.length;
+  stats.urgent += urgentCount;
+  stats.normal += normalCount;
+  stats.lastUpdate = new Date().toISOString();
+
+  writeFileSync(statsPath, JSON.stringify(stats, null, 2), 'utf-8');
+  console.log(`统计数据已写入 stats.json: total=${stats.total}, urgent=${stats.urgent}, normal=${stats.normal}`);
 }
 
 /**
@@ -202,6 +238,9 @@ async function main() {
       appendToExcel(excelPath, allArticles);
       console.log('');
     }
+
+    // 7.5 写入统计数据
+    writeStats(dataDir, allArticles, type);
 
     // 8. 清理旧文件
     console.log('========================================');
