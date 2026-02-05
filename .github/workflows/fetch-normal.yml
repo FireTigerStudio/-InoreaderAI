@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: data-commit
+  cancel-in-progress: false
+
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -32,7 +36,15 @@ jobs:
           cp -r data/* docs/data/ 2>/dev/null || true
           cp stats.json docs/stats.json 2>/dev/null || true
 
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "📄 Normal update"
-          file_pattern: "data/*.xlsx docs/data/*.xlsx stats.json docs/stats.json"
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.xlsx docs/data/*.xlsx stats.json docs/stats.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "📄 Normal update"
+          git pull --rebase origin main
+          git push
